@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulación Titulación HCl vs NaOH</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  header {
+    text-align: center;
+    padding: 18px 10px 10px;
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    border-bottom: 2px solid #00d2ff44;
+  }
+  header h1 { font-size: 1.5rem; color: #00d2ff; }
+  header p  { font-size: 0.85rem; color: #8b949e; margin-top: 4px; }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px;
+    padding: 12px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 14px;
+    position: relative;
+  }
+  .card h2 {
+    font-size: 1rem;
+    color: #00d2ff;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .card-curva  { grid-column: 1; grid-row: 1; }
+  .card-lab    { grid-column: 2; grid-row: 1; }
+  .card-datos  { grid-column: 1; grid-row: 2; }
+  .card-tabla  { grid-column: 2; grid-row: 2; }
+
+  canvas { display: block; margin: 0 auto; border-radius: 8px; }
+
+  /* Slider */
+  .slider-zone {
+    grid-column: 1 / -1;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .slider-zone label { font-size: 1rem; color: #00d2ff; font-weight: bold; white-space: nowrap; }
+  .slider-zone input[type=range] {
+    flex: 1; min-width: 250px; max-width: 700px;
+    accent-color: #00d2ff; height: 6px; cursor: pointer;
+  }
+  .slider-zone .vol-display {
+    font-size: 1.3rem; font-weight: bold; color: #fff;
+    background: #0f3460; padding: 4px 14px; border-radius: 8px;
+    min-width: 100px; text-align: center;
+  }
+  .btn-group { display: flex; gap: 6px; }
+  .btn-group button {
+    background: #0f3460; color: #00d2ff; border: 1px solid #00d2ff55;
+    padding: 6px 14px; border-radius: 6px; cursor: pointer;
+    font-size: 0.85rem; font-weight: bold; transition: 0.2s;
+  }
+  .btn-group button:hover { background: #00d2ff; color: #0d1117; }
+  .btn-group button.active { background: #00d2ff; color: #0d1117; }
+
+  /* Datos en vivo */
+  .datos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .dato-box {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+  .dato-box .label { font-size: 0.7rem; color: #8b949e; text-transform: uppercase; }
+  .dato-box .value { font-size: 1.3rem; font-weight: bold; margin-top: 2px; }
+  .dato-box.full { grid-column: 1 / -1; }
+
+  .estado-banner {
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1rem;
+    margin-top: 8px;
+    border: 2px solid;
+    transition: all 0.3s;
+  }
+
+  /* Tabla */
+  .tabla-scroll { max-height: 340px; overflow-y: auto; border-radius: 8px; }
+  .tabla-scroll::-webkit-scrollbar { width: 6px; }
+  .tabla-scroll::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  th {
+    background: #0f3460; color: #00d2ff; padding: 7px 4px;
+    position: sticky; top: 0; z-index: 2;
+  }
+  td { padding: 5px 4px; text-align: center; border-bottom: 1px solid #21262d; }
+  tr:hover td { background: #1c2333; }
+  .color-dot {
+    display: inline-block; width: 14px; height: 14px;
+    border-radius: 50%; border: 1px solid #555; vertical-align: middle;
+  }
+  .row-eq td  { background: #FFD70022 !important; color: #FFD700; font-weight: bold; }
+  .row-fin td { background: #FF69B422 !important; color: #FF69B4; font-weight: bold; }
+
+  @media (max-width: 800px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .card-curva, .card-lab, .card-datos, .card-tabla { grid-column: 1; grid-row: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚗️ Simulación de Titulación Ácido-Base</h1>
+  <p>HCl 0.1 N (10 mL en erlenmeyer) &nbsp;vs&nbsp; NaOH 0.1 N (bureta) &nbsp;|&nbsp; Indicador: Fenolftaleína (1 gota)</p>
+</header>
+
+<div class="main-grid">
+
+  <div class="card card-curva">
+    <h2>📈 Curva de Titulación</h2>
+    <canvas id="cvCurva" width="580" height="380"></canvas>
+  </div>
+
+  <div class="card card-lab">
+    <h2>🧪 Montaje del Laboratorio</h2>
+    <canvas id="cvLab" width="420" height="400"></canvas>
+  </div>
+
+  <div class="card card-datos">
+    <h2>📊 Datos en Tiempo Real</h2>
+    <div class="datos-grid">
+      <div class="dato-box">
+        <div class="label">Volumen NaOH</div>
+        <div class="value" id="dVol" style="color:#00d2ff">0.00 mL</div>
+      </div>
+      <div class="dato-box">
+        <div class="label">pH actual</div>
+        <div class="value" id="dPH" style="color:#ff6b6b">1.00</div>
+      </div>
+      <div class="dato-box">
+        <div class="label">Volumen total</div>
+        <div class="value" id="dVT" style="color:#aaa">10.00 mL</div>
+      </div>
+      <div class="dato-box">
+        <div class="label">[H⁺] o [OH⁻]</div>
+        <div class="value" id="dConc" style="color:#ffa502">0.1000 M</div>
+      </div>
+      <div class="dato-box">
+        <div class="label">mol HCl restantes</div>
+        <div class="value" id="dMolH" style="color:#ff6b6b">0.00100</div>
+      </div>
+      <div class="dato-box">
+        <div class="label">mol NaOH añadidos</div>
+        <div class="value" id="dMolOH" style="color:#4ecdc4">0.00000</div>
+      </div>
+      <div class="dato-box full">
+        <div class="label">Punto de Equivalencia</div>
+        <div class="value" style="color:#FFD700">V = 10.00 mL &nbsp;|&nbsp; pH = 7.00</div>
+      </div>
+      <div class="dato-box full">
+        <div class="label">Punto Final (Fenolftaleína)</div>
+        <div class="value" id="dPF" style="color:#FF69B4">V ≈ 10.01 mL &nbsp;|&nbsp; pH ≈ 8.20</div>
+      </div>
+    </div>
+    <div class="estado-banner" id="estadoBanner">
+      🔬 ANTES DE LA EQUIVALENCIA — Medio ÁCIDO — Solución INCOLORA
+    </div>
+  </div>
+
+  <div class="card card-tabla">
+    <h2>📋 Tabla de la Titulación</h2>
+    <div class="tabla-scroll">
+      <table id="tablaDatos">
+        <thead>
+          <tr>
+            <th>V NaOH (mL)</th>
+            <th>pH</th>
+            <th>Color</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tablaBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="slider-zone">
+    <label>🧫 V NaOH:</label>
+    <input type="range" id="slider" min="0" max="20" step="0.01" value="0">
+    <div class="vol-display" id="volDisplay">0.00 mL</div>
+    <div class="btn-group">
+      <button onclick="setVol(0)">Inicio</button>
+      <button onclick="setVol(5)">5 mL</button>
+      <button onclick="setVol(9.5)">9.5 mL</button>
+      <button onclick="setVol(10)" class="active">Eq (10)</button>
+      <button onclick="setVol(10.05)">Pto Final</button>
+      <button onclick="setVol(15)">15 mL</button>
+      <button onclick="setVol(20)">20 mL</button>
+      <button onclick="animar()" id="btnAnim">▶ Animar</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===================== CONSTANTES =====================
+const V_HCl = 10.0, C_HCl = 0.1, C_NaOH = 0.1;
+const V_EQ = V_HCl * C_HCl / C_NaOH; // 10 mL
+const PH_VI = 8.2, PH_VF = 10.0;
+
+// ===================== CÁLCULOS =====================
+function calcPH(v) {
+  const vt = V_HCl + v;
+  const nH = C_HCl * V_HCl / 1000;
+  const nOH = C_NaOH * v / 1000;
+  if (v < 1e-9) return -Math.log10(C_HCl);
+  if (nOH < nH - 1e-12) return -Math.log10((nH - nOH) / (vt / 1000));
+  if (Math.abs(nOH - nH) <= 1e-12) return 7.0;
+  return 14.0 + Math.log10((nOH - nH) / (vt / 1000));
+}
+
+function colorFenol(pH) {
+  if (pH < PH_VI) return { r:255, g:255, b:255, hex:'#ffffff', name:'Incoloro' };
+  if (pH > PH_VF) return { r:216, g:0, b:140, hex:'#d8008c', name:'Fucsia' };
+  const t = (pH - PH_VI) / (PH_VF - PH_VI);
+  const r = Math.round(255 - 39*t);
+  const g = Math.round(255 - 255*t);
+  const b = Math.round(255 - 115*t);
+  const hex = '#' + [r,g,b].map(c=>c.toString(16).padStart(2,'0')).join('');
+  return { r, g, b, hex, name: t < 0.5 ? 'Rosa pálido' : 'Rosa' };
+}
+
+// Generar puntos de la curva
+const puntos = [];
+const rangos = [[0,8,80],[8,9.5,200],[9.5,10.5,800],[10.5,12,200],[12,20,80]];
+rangos.forEach(([a,b,n]) => {
+  for (let i = 0; i <= n; i++) {
+    const v = a + (b - a) * i / n;
+    puntos.push({ v, ph: calcPH(v) });
+  }
+});
+
+// Punto final
+let vFinal = 10.0, phFinal = 7.0;
+for (const p of puntos) {
+  if (p.ph >= PH_VI) { vFinal = p.v; phFinal = p.ph; break; }
+}
+
+// ===================== CANVAS: CURVA =====================
+const cvC = document.getElementById('cvCurva');
+const cxC = cvC.getContext('2d');
+const WC = cvC.width, HC = cvC.height;
+const ML = 55, MR = 20, MT = 20, MB = 45;
+const PW = WC - ML - MR, PH2 = HC - MT - MB;
+
+function vToX(v) { return ML + (v / 20) * PW; }
+function phToY(ph) { return MT + PH2 - (ph / 14) * PH2; }
+
+function drawCurva(vActual) {
+  const c = cxC;
+  c.clearRect(0, 0, WC, HC);
+
+  // Fondo
+  c.fillStyle = '#0d1117';
+  c.fillRect(0, 0, WC, HC);
+
+  // Grid
+  c.strokeStyle = '#21262d';
+  c.lineWidth = 0.5;
+  for (let ph = 0; ph <= 14; ph += 2) {
+    const y = phToY(ph);
+    c.beginPath(); c.moveTo(ML, y); c.lineTo(ML + PW, y); c.stroke();
+    c.fillStyle = '#8b949e'; c.font = '11px monospace'; c.textAlign = 'right';
+    c.fillText(ph.toString(), ML - 8, y + 4);
+  }
+  for (let v = 0; v <= 20; v += 2) {
+    const x = vToX(v);
+    c.beginPath(); c.moveTo(x, MT); c.lineTo(x, MT + PH2); c.stroke();
+    c.fillStyle = '#8b949e'; c.font = '11px monospace'; c.textAlign = 'center';
+    c.fillText(v.toString(), x, MT + PH2 + 18);
+  }
+
+  // Ejes
+  c.strokeStyle = '#555'; c.lineWidth = 1.5;
+  c.beginPath(); c.moveTo(ML, MT); c.lineTo(ML, MT+PH2); c.lineTo(ML+PW, MT+PH2); c.stroke();
+
+  // Labels
+  c.fillStyle = '#e6edf3'; c.font = 'bold 12px sans-serif'; c.textAlign = 'center';
+  c.fillText('Volumen NaOH (mL)', ML + PW/2, HC - 5);
+  c.save(); c.translate(14, MT + PH2/2); c.rotate(-Math.PI/2);
+  c.fillText('pH', 0, 0); c.restore();
+
+  // Zona de viraje
+  c.fillStyle = 'rgba(255,105,180,0.08)';
+  c.fillRect(ML, phToY(PH_VF), PW, phToY(PH_VI) - phToY(PH_VF));
+  c.fillStyle = '#FF69B488'; c.font = '9px sans-serif'; c.textAlign = 'left';
+  c.fillText('Zona viraje fenolftaleína', ML + 5, phToY(PH_VF) + 12);
+
+  // Línea pH 7
+  c.setLineDash([4,4]); c.strokeStyle = '#555'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(ML, phToY(7)); c.lineTo(ML+PW, phToY(7)); c.stroke();
+  c.setLineDash([]);
+
+  // Curva
+  c.beginPath();
+  c.strokeStyle = '#00d2ff'; c.lineWidth = 2.5;
+  puntos.forEach((p, i) => {
+    const x = vToX(p.v), y = phToY(p.ph);
+    i === 0 ? c.moveTo(x, y) : c.lineTo(x, y);
+  });
+  c.stroke();
+
+  // Punto de equivalencia
+  const xEq = vToX(V_EQ), yEq = phToY(7);
+  c.fillStyle = '#FFD700';
+  c.beginPath();
+  c.moveTo(xEq, yEq - 9); c.lineTo(xEq + 7, yEq);
+  c.lineTo(xEq, yEq + 9); c.lineTo(xEq - 7, yEq); c.closePath(); c.fill();
+  c.strokeStyle = '#fff'; c.lineWidth = 1.2; c.stroke();
+  c.fillStyle = '#FFD700'; c.font = 'bold 10px sans-serif'; c.textAlign = 'left';
+  c.fillText('★ PTO EQUIVALENCIA', xEq + 12, yEq - 8);
+  c.font = '9px sans-serif';
+  c.fillText(`V=${V_EQ.toFixed(1)} mL  pH=7.00`, xEq + 12, yEq + 6);
+
+  // Punto final
+  const xF = vToX(vFinal), yF = phToY(phFinal);
+  c.fillStyle = '#FF69B4';
+  c.fillRect(xF - 6, yF - 6, 12, 12);
+  c.strokeStyle = '#fff'; c.lineWidth = 1.2; c.strokeRect(xF - 6, yF - 6, 12, 12);
+  c.fillStyle = '#FF69B4'; c.font = 'bold 10px sans-serif'; c.textAlign = 'right';
+  c.fillText('■ PTO FINAL (fenolftaleína)', xF - 10, yF - 6);
+  c.font = '9px sans-serif';
+  c.fillText(`V≈${vFinal.toFixed(2)} mL  pH≈${phFinal.toFixed(2)}`, xF - 10, yF + 8);
+
+  // Punto actual
+  const pHact = calcPH(vActual);
+  const xA = vToX(vActual), yA = phToY(pHact);
+  c.setLineDash([3,3]); c.strokeStyle = '#00ff8855'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(xA, MT+PH2); c.lineTo(xA, yA); c.stroke();
+  c.beginPath(); c.moveTo(ML, yA); c.lineTo(xA, yA); c.stroke();
+  c.setLineDash([]);
+  c.beginPath(); c.arc(xA, yA, 7, 0, Math.PI*2);
+  c.fillStyle = '#00ff88'; c.fill();
+  c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke();
+  c.fillStyle = '#00ff88'; c.font = 'bold 11px monospace'; c.textAlign = 'left';
+  c.fillText(`pH=${pHact.toFixed(2)}`, xA + 12, yA - 4);
+}
+
+// ===================== CANVAS: LABORATORIO =====================
+const cvL = document.getElementById('cvLab');
+const cxL = cvL.getContext('2d');
+const WL = cvL.width, HL = cvL.height;
+
+function drawLab(vActual) {
+  const c = cxL;
+  c.clearRect(0, 0, WL, HL);
+  c.fillStyle = '#0d1117'; c.fillRect(0, 0, WL, HL);
+
+  const pH = calcPH(vActual);
+  const col = colorFenol(pH);
+
+  // Soporte
+  c.fillStyle = '#555';
+  c.fillRect(195, 30, 8, 350);
+  c.fillRect(150, 370, 100, 8);
+
+  // Bureta
+  const bx = 200, bTop = 40, bBot = 260, bW = 22;
+  c.fillStyle = '#aaddff22';
+  c.strokeStyle = '#aaddff88'; c.lineWidth = 1.5;
+  c.fillRect(bx - bW/2, bTop, bW, bBot - bTop);
+  c.strokeRect(bx - bW/2, bTop, bW, bBot - bTop);
+
+  const frac = Math.min(vActual / 20, 1);
+  const liqH = (bBot - bTop - 10) * (1 - frac);
+  const liqY = bBot - 5 - liqH;
+  c.fillStyle = '#0066cc99';
+  c.fillRect(bx - bW/2 + 2, liqY, bW - 4, liqH);
+
+  c.fillStyle = '#8b949e'; c.font = '8px monospace'; c.textAlign = 'left';
+  for (let i = 0; i <= 20; i += 5) {
+    const y = bTop + 5 + (bBot - bTop - 10) * (i / 20);
+    c.fillRect(bx + bW/2, y, 5, 1);
+    c.fillText(i + '', bx + bW/2 + 7, y + 3);
+  }
+
+  c.fillStyle = '#888';
+  c.fillRect(bx - 16, bBot - 2, 32, 8);
+  c.fillStyle = '#aaa';
+  c.beginPath(); c.arc(bx + 14, bBot + 2, 5, 0, Math.PI*2); c.fill();
+
+  c.strokeStyle = '#aaddff'; c.lineWidth = 2;
+  c.beginPath(); c.moveTo(bx, bBot + 6); c.lineTo(bx, bBot + 30); c.stroke();
+
+  if (vActual > 0.05) {
+    const gotaY = bBot + 32 + Math.sin(Date.now()/200) * 3;
+    c.fillStyle = '#4488ffcc';
+    c.beginPath(); c.arc(bx, gotaY, 3, 0, Math.PI*2); c.fill();
+  }
+
+  c.fillStyle = '#aaddff'; c.font = 'bold 11px sans-serif'; c.textAlign = 'center';
+  c.fillText('NaOH 0.1 N', bx, bTop - 8);
+  c.fillStyle = '#8b949e'; c.font = '9px sans-serif';
+  c.fillText('BURETA', bx, bTop - 20);
+
+  // Erlenmeyer
+  const ex = 200, eTop = 290, eBot = 370, eWb = 80, eWt = 28;
+  c.beginPath();
+  c.moveTo(ex - eWb/2, eBot);
+  c.lineTo(ex + eWb/2, eBot);
+  c.lineTo(ex + eWt/2, eTop);
+  c.lineTo(ex - eWt/2, eTop);
+  c.closePath();
+  c.fillStyle = '#22222288';
+  c.fill();
+  c.strokeStyle = '#ccc'; c.lineWidth = 2; c.stroke();
+
+  c.fillStyle = '#22222288';
+  c.fillRect(ex - 8, eTop - 20, 16, 22);
+  c.strokeStyle = '#ccc'; c.lineWidth = 1.5;
+  c.strokeRect(ex - 8, eTop - 20, 16, 22);
+
+  const liqTop = eTop + 15;
+  const wAtLiqTop = eWt/2 + (eWb/2 - eWt/2) * ((eBot - liqTop) / (eBot - eTop));
+  c.beginPath();
+  c.moveTo(ex - eWb/2 + 4, eBot - 3);
+  c.lineTo(ex + eWb/2 - 4, eBot - 3);
+  c.lineTo(ex + wAtLiqTop - 2, liqTop);
+  c.lineTo(ex - wAtLiqTop + 2, liqTop);
+  c.closePath();
+  c.fillStyle = col.hex + 'cc';
+  c.fill();
+
+  c.fillStyle = '#e6edf3'; c.font = 'bold 10px sans-serif'; c.textAlign = 'center';
+  c.fillText('HCl 0.1 N (10 mL)', ex, eBot + 16);
+  c.fillStyle = '#8b949e'; c.font = '9px sans-serif';
+  c.fillText('+ 1 gota fenolftaleína', ex, eBot + 28);
+  c.fillText('ERLENMEYER', ex, eBot + 42);
+
+  c.fillStyle = col.hex; c.font = 'bold 12px sans-serif';
+  c.fillText(`Color: ${col.name}`, ex, eTop - 30);
+  c.beginPath(); c.arc(ex + 55, eTop - 34, 8, 0, Math.PI*2);
+  c.fillStyle = col.hex; c.fill();
+  c.strokeStyle = '#888'; c.lineWidth = 1; c.stroke();
+}
+
+// ===================== DATOS EN TIEMPO REAL =====================
+function updateDatos(v) {
+  const pH = calcPH(v);
+  const nH = C_HCl * V_HCl / 1000;
+  const nOH = C_NaOH * v / 1000;
+  const nHrest = Math.max(nH - nOH, 0);
+  const nOHexc = Math.max(nOH - nH, 0);
+  const vt = V_HCl + v;
+
+  document.getElementById('dVol').textContent = v.toFixed(2) + ' mL';
+  document.getElementById('dPH').textContent = pH.toFixed(2);
+  document.getElementById('dPH').style.color = pH < 7 ? '#ff6b6b' : pH === 7 ? '#FFD700' : '#4ecdc4';
+  document.getElementById('dVT').textContent = vt.toFixed(2) + ' mL';
+
+  if (nHrest > 1e-10) {
+    const cH = nHrest / (vt/1000);
+    document.getElementById('dConc').textContent = `[H⁺]=${cH.toExponential(2)} M`;
+    document.getElementById('dConc').style.color = '#ff6b6b';
+  } else if (nOHexc > 1e-10) {
+    const cOH = nOHexc / (vt/1000);
+    document.getElementById('dConc').textContent = `[OH⁻]=${cOH.toExponential(2)} M`;
+    document.getElementById('dConc').style.color = '#4ecdc4';
+  } else {
+    document.getElementById('dConc').textContent = '1.0×10⁻⁷ M';
+    document.getElementById('dConc').style.color = '#FFD700';
+  }
+
+  document.getElementById('dMolH').textContent = nHrest.toFixed(5);
+  document.getElementById('dMolOH').textContent = nOH.toFixed(5);
+
+  const ban = document.getElementById('estadoBanner');
+  if (v < V_EQ - 0.1) {
+    ban.textContent = '🔬 ANTES DE LA EQUIVALENCIA — Medio ÁCIDO — Solución INCOLORA';
+    ban.style.color = '#ff6b6b'; ban.style.borderColor = '#ff6b6b'; ban.style.background = '#ff6b6b11';
+  } else if (Math.abs(v - V_EQ) <= 0.1) {
+    ban.textContent = '⚡ PUNTO DE EQUIVALENCIA — pH = 7.00 — Solución NEUTRA';
+    ban.style.color = '#FFD700'; ban.style.borderColor = '#FFD700'; ban.style.background = '#FFD70011';
+  } else if (pH < PH_VI) {
+    ban.textContent = '🔬 ENTRE EQUIVALENCIA Y PTO FINAL — Medio BÁSICO — Aún INCOLORA';
+    ban.style.color = '#ffa502'; ban.style.borderColor = '#ffa502'; ban.style.background = '#ffa50211';
+  } else if (pH <= PH_VF) {
+    ban.textContent = '🌸 ¡PUNTO FINAL ALCANZADO! — Viraje de FENOLFTALEÍNA — ROSA';
+    ban.style.color = '#FF69B4'; ban.style.borderColor = '#FF69B4'; ban.style.background = '#FF69B411';
+  } else {
+    ban.textContent = '⚠️ EXCESO DE NaOH — Medio fuertemente BÁSICO — FUCSIA';
+    ban.style.color = '#d8008c'; ban.style.borderColor = '#d8008c'; ban.style.background = '#d8008c11';
+  }
+}
+
+// ===================== TABLA =====================
+function buildTabla() {
+  const vols = [0,1,2,3,4,5,6,7,8,9,9.5,9.8,9.9,9.95,9.99,10.0,10.01,10.05,10.1,10.2,10.5,11,12,14,16,18,20];
+  const tbody = document.getElementById('tablaBody');
+  tbody.innerHTML = '';
+  vols.forEach(v => {
+    const pH = calcPH(v);
+    const col = colorFenol(pH);
+    const tr = document.createElement('tr');
+    if (Math.abs(v - V_EQ) < 0.005) tr.className = 'row-eq';
+    else if (Math.abs(v - vFinal) < 0.02) tr.className = 'row-fin';
+
+    let estado = '';
+    if (v < V_EQ - 0.05) estado = 'Ácido';
+    else if (Math.abs(v - V_EQ) <= 0.05) estado = '★ Equivalencia';
+    else if (pH < PH_VI) estado = 'Básico (incoloro)';
+    else if (pH <= PH_VF) estado = '★ Pto Final';
+    else estado = 'Exceso NaOH';
+
+    tr.innerHTML = `
+      <td>${v.toFixed(2)}</td>
+      <td>${pH.toFixed(2)}</td>
+      <td><span class="color-dot" style="background:${col.hex}"></span> ${col.name}</td>
+      <td>${estado}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ===================== INTERACCIÓN =====================
+const slider = document.getElementById('slider');
+const volDisp = document.getElementById('volDisplay');
+
+function actualizarTodo(v) {
+  volDisp.textContent = v.toFixed(2) + ' mL';
+  drawCurva(v);
+  drawLab(v);
+  updateDatos(v);
+}
+
+slider.addEventListener('input', () => actualizarTodo(parseFloat(slider.value)));
+
+function setVol(v) {
+  slider.value = v;
+  actualizarTodo(v);
+}
+
+let animId = null;
+function animar() {
+  const btn = document.getElementById('btnAnim');
+  if (animId) {
+    cancelAnimationFrame(animId);
+    animId = null;
+    btn.textContent = '▶ Animar';
+    return;
+  }
+  btn.textContent = '⏸ Pausar';
+  let v = parseFloat(slider.value);
+  function step() {
+    v += 0.04;
+    if (v > 20) v = 0;
+    slider.value = v;
+    actualizarTodo(v);
+    animId = requestAnimationFrame(step);
+  }
+  step();
+}
+
+// ===================== INICIO =====================
+buildTabla();
+actualizarTodo(0);
+</script>
+
+</body>
+</html>
