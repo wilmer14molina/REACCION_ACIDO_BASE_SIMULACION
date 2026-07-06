@@ -30,15 +30,6 @@
             90% { opacity: 1; }
             100% { top: 100%; opacity: 0; transform: scaleY(1.5); }
         }
-        /* Animación del splash en el líquido */
-        .splash {
-            position: absolute;
-            border-radius: 50%;
-            animation: splash-out 0.4s ease-out forwards;
-        }
-        @keyframes splash-out {
-            0% { transform: scale(3); opacity: 0; }
-        }
         /* Llave de la bureta */
         .stopcock {
             transition: transform 0.2s ease;
@@ -74,6 +65,21 @@
             width: 12px;
             background-color: #cbd5e1;
         }
+        /* Estructura para fracciones matemáticas en CSS */
+        .math-fraction {
+            display: inline-flex;
+            flex-direction: column;
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 4px;
+        }
+        .math-numerator {
+            border-bottom: 1px solid #475569;
+            padding-bottom: 1px;
+        }
+        .math-denominator {
+            padding-top: 1px;
+        }
     </style>
 </head>
 <body class="p-4 min-h-screen flex flex-col justify-between">
@@ -88,6 +94,27 @@
     <main class="grid grid-cols-1 lg:grid-cols-12 gap-4 max-w-7xl mx-auto w-full flex-1 items-stretch">
         
         <section class="lg:col-span-4 flex flex-col gap-4">
+            
+            <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-xl">
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span>📍</span> Datos Iniciales del Analito (Matraz)
+                </h2>
+                <div class="grid grid-cols-2 gap-2 text-center text-xs">
+                    <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-500 block">Sustancia</span>
+                        <span class="text-slate-300 font-bold">HCl (Muestra)</span>
+                    </div>
+                    <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-500 block">Volumen Inicial (V<sub>a</sub>)</span>
+                        <span class="text-blue-400 font-bold mono">10.00 mL</span>
+                    </div>
+                    <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800 col-span-2">
+                        <span class="text-[10px] uppercase font-bold text-slate-500 block">Concentración Real de Preparación (M<sub>a</sub>)</span>
+                        <span class="text-amber-400 font-bold mono">0.1000 M</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-xl">
                 <h2 class="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
                     <span>🛠️</span> Acciones del Analista
@@ -119,10 +146,12 @@
                         <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800 text-center">
                             <span class="text-[10px] uppercase font-bold text-slate-500 block">mol HCl iniciales</span>
                             <span class="text-base font-black text-slate-300 mono">0.00100</span>
+                            <span class="text-[9px] text-slate-500 block font-mono mt-0.5">n = M<sub>a</sub> · V<sub>a</sub></span>
                         </div>
                         <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800 text-center">
                             <span class="text-[10px] uppercase font-bold text-slate-500 block">mol NaOH añadidos</span>
                             <span id="dMolOH" class="text-base font-black text-emerald-400 mono">0.00000</span>
+                            <span class="text-[9px] text-slate-500 block font-mono mt-0.5">n = M<sub>b</sub> · V<sub>b</sub></span>
                         </div>
                         <div class="bg-slate-950/70 p-2 rounded-lg border border-slate-800 text-center col-span-2">
                             <span class="text-[10px] uppercase font-bold text-slate-500 block">mol HCl restantes en matraz</span>
@@ -143,8 +172,9 @@
         </section>
 
         <section class="lg:col-span-4 bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 shadow-xl flex flex-col justify-between items-center relative overflow-hidden min-h-[450px]">
-            <div class="w-full flex justify-between text-xs font-bold px-2 z-10">
+            <div class="w-full flex justify-between text-xs font-bold px-2 z-10 items-center">
                 <span id="ind-tag" class="border border-slate-800 px-2 py-1 rounded bg-slate-950/60 opacity-30 transition-all">Fenolftaleína</span>
+                <span class="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide bg-slate-950/80 px-2 py-1 rounded border border-slate-800">BURETA: Valorante (NaOH ~0.1 M)</span>
                 <span id="state-tag" class="border border-slate-800 px-2 py-1 rounded bg-slate-950/60 text-blue-400 opacity-30 transition-all">pH 1.00</span>
             </div>
 
@@ -190,22 +220,49 @@
         </section>
 
         <section class="lg:col-span-4 flex flex-col gap-4">
+            
             <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 shadow-xl">
                 <div class="flex justify-between items-center mb-1">
                     <h2 class="text-xs font-bold text-slate-300">📈 Curva de Titulación Real</h2>
                     <span class="text-[9px] text-slate-500 mono">Ejes: pH vs mL</span>
                 </div>
-                <div class="bg-white rounded-lg p-1 border border-slate-200">
-                    <canvas id="chart" class="w-full block" style="height: 220px;"></canvas>
+                <div class="bg-slate-950 rounded-lg p-1 border border-slate-800">
+                    <canvas id="chart" class="w-full block" style="height: 200px;"></canvas>
                 </div>
             </div>
 
-            <div id="result-box" class="bg-slate-950/80 border border-slate-950 rounded-xl p-3 text-center hidden transition-all duration-300">
-                <div class="text-2xl font-black mono text-blue-400 my-1"><span id="result-nb">0.0000</span> <span class="text-xs font-normal text-slate-400">N</span></div>
-                <p class="text-[10px] text-slate-400 mb-2">Concentración calculada del NaOH</p>
-                <button onclick="resetSimulation()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-1.5 px-3 rounded-lg text-xs cursor-pointer transition">
-                    🔄 Limpiar y reiniciar ensayo
-                </button>
+            <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-xl flex-1 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2 mb-2">📐 Cálculo Predictivo Teórico</h3>
+                    <p class="text-[10px] text-slate-400 leading-relaxed mb-3">
+                        En el punto de equivalencia se cumple que: V<sub>a</sub> · M<sub>a</sub> = V<sub>b</sub> · M<sub>b</sub>
+                    </p>
+                    <div class="bg-slate-950/70 p-3 rounded-lg border border-slate-800 text-center text-xs text-slate-300">
+                        <div class="flex items-center justify-center gap-1">
+                            <span class="font-mono">V<sub>b</sub> = </span>
+                            <div class="math-fraction font-mono text-[11px]">
+                                <span class="math-numerator">V<sub>a</sub> · M<sub>a</sub></span>
+                                <span class="math-denominator">M<sub>b</sub></span>
+                            </div>
+                            <span class="font-mono"> = </span>
+                            <div class="math-fraction font-mono text-[11px]">
+                                <span class="math-numerator">10.00 mL · 0.1000 M</span>
+                                <span class="math-denominator">0.1000 M</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-slate-800 text-slate-400 text-[10px]">
+                            Volumen teórico de NaOH requerido: <span class="text-blue-400 font-bold font-mono">10.00 mL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="result-box" class="bg-slate-950/80 border border-slate-950 rounded-xl p-3 text-center hidden transition-all duration-300 mt-2">
+                    <div class="text-2xl font-black mono text-blue-400 my-1"><span id="result-nb">0.0000</span> <span class="text-xs font-normal text-slate-400">M</span></div>
+                    <p class="text-[10px] text-slate-400 mb-2">Concentración calculada del NaOH</p>
+                    <button onclick="resetSimulation()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-1.5 px-3 rounded-lg text-xs cursor-pointer transition">
+                        🔄 Limpiar y reiniciar ensayo
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -240,7 +297,7 @@
         const dropZone = $('drop-zone');
         const canvas = $('chart');
         const ctx = canvas.getContext('2d');
-        let chartW = 600, chartH = 220;
+        let chartW = 600, chartH = 200;
 
         // Construir graduaciones mecánicas de la bureta
         (function buildGraduations() {
@@ -279,7 +336,7 @@
             return 'rgba(190, 24, 93, 0.85)';
         }
 
-        // Renderizado visual y actualización de los datos moleculares (Tu lógica)
+        // Renderizado visual y actualización de los datos moleculares
         function updateView() {
             volDisplay.textContent = S.vol.toFixed(2);
             phDisplay.textContent = S.pH.toFixed(2);
@@ -347,7 +404,7 @@
             d.addEventListener('animationend', () => { d.remove(); });
         }
 
-        // Gráfica cartesiana nativa en Canvas HTML5
+        // Gráfica cartesiana nativa en Canvas HTML5 adaptada al tema oscuro
         function drawChart() {
             const W = chartW, H = chartH;
             const pad = { top: 15, right: 15, bottom: 25, left: 35 };
