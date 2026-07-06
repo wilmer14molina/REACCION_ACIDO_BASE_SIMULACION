@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulador de Valoración Ácido-Base Profesional</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             background-color: #0f172a;
@@ -180,7 +180,7 @@
 
             <div class="flex flex-col items-center justify-start h-full w-full mt-4 relative" style="max-width: 180px;">
                 <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-slate-700 transform translate-x-12 opacity-40"></div>
-                <div class="absolute left-1/2 bottom-0 w-24 h-2 bg-slate-600 transform translate-x-1 y-1 rounded opacity-40"></div>
+                <div class="absolute left-1/2 bottom-0 w-24 h-2 bg-slate-600 transform translate-x-1 rounded opacity-40"></div>
 
                 <div class="w-6 h-56 border-2 border-slate-500/60 rounded-t-sm bg-slate-950/30 relative flex items-end">
                     <div id="buret-grads"></div>
@@ -299,7 +299,6 @@
         const ctx = canvas.getContext('2d');
         let chartW = 600, chartH = 200;
 
-        // Construir graduaciones mecánicas de la bureta
         (function buildGraduations() {
             const container = $('buret-grads');
             container.innerHTML = '';
@@ -312,7 +311,6 @@
             }
         })();
 
-        // Cálculo analítico matemático del pH y balance real de moles
         function calculatePH(Vb) {
             const nH = (CFG.Na * CFG.Va) / 1000;
             const nOH = (CFG.Cb * Vb) / 1000;
@@ -326,7 +324,6 @@
             return 7.00;
         }
 
-        // Color real de la fenolftaleína según escala de pH
         function phenolphthaleinColor(pH) {
             if (pH < 8.2) return 'rgba(255,255,255,0.15)'; 
             if (pH < 10) {
@@ -336,7 +333,6 @@
             return 'rgba(190, 24, 93, 0.85)';
         }
 
-        // Renderizado visual y actualización de los datos moleculares
         function updateView() {
             volDisplay.textContent = S.vol.toFixed(2);
             phDisplay.textContent = S.pH.toFixed(2);
@@ -353,7 +349,6 @@
 
             stopcock.classList.toggle('open', S.active);
 
-            // CÁLCULOS EN TIEMPO REAL REQUERIDOS
             const nH_init = (CFG.Na * CFG.Va) / 1000;
             const nOH_added = (CFG.Cb * S.vol) / 1000;
             const nH_rest = Math.max(nH_init - nOH_added, 0);
@@ -376,7 +371,6 @@
                 concEl.style.color = '#FFD700';
             }
 
-            // Actualización del banner educativo
             const ban = $('estadoBanner');
             if (S.vol < CFG.Vb_theoretical - 0.05) {
                 ban.textContent = '🔬 ANTES DE LA EQUIVALENCIA — Medio ÁCIDO — Solución INCOLORA';
@@ -404,7 +398,6 @@
             d.addEventListener('animationend', () => { d.remove(); });
         }
 
-        // Gráfica cartesiana nativa en Canvas HTML5 adaptada al tema oscuro
         function drawChart() {
             const W = chartW, H = chartH;
             const pad = { top: 15, right: 15, bottom: 25, left: 35 };
